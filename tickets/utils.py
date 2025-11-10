@@ -1,4 +1,4 @@
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.template import Template, Context
 from django.utils.html import strip_tags
 from django.conf import settings
@@ -54,17 +54,17 @@ def send_booking_confirmation_email(request, booking):
     # Create plain text version by stripping HTML tags
     plain_message = strip_tags(html_message)
 
-    # Send email with Reply-To header
+    # Send email with Reply-To header using EmailMultiAlternatives
     try:
-        send_mail(
+        email = EmailMultiAlternatives(
             subject=subject,
-            message=plain_message,
+            body=plain_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[booking.email],
-            html_message=html_message,
-            fail_silently=False,
-            headers={'Reply-To': event.contact_email},
+            to=[booking.email],
+            reply_to=[event.contact_email],
         )
+        email.attach_alternative(html_message, "text/html")
+        email.send(fail_silently=False)
         return True
     except Exception as e:
         # Log the error
@@ -120,14 +120,14 @@ View in admin: {admin_url}
 
     # Send email with Reply-To set to customer's email for easy replies
     try:
-        send_mail(
+        email = EmailMultiAlternatives(
             subject=subject,
-            message=message,
+            body=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=admin_emails,
-            fail_silently=False,
-            headers={'Reply-To': booking.email},
+            to=admin_emails,
+            reply_to=[booking.email],
         )
+        email.send(fail_silently=False)
         return True
     except Exception as e:
         # Log the error
