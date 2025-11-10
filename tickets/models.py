@@ -16,11 +16,14 @@ class Event(models.Model):
         max_length=255,
         help_text="Event name displayed on the booking page"
     )
-    description = models.TextField(
-        help_text="Event description (supports HTML)"
-    )
     venue_details = models.TextField(
         help_text="Venue, date, time information"
+    )
+
+    # Form Configuration
+    collect_phone_number = models.BooleanField(
+        default=False,
+        help_text="If true, shows phone number field on booking form"
     )
 
     # Pricing Configuration

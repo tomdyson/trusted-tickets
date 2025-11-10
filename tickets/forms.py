@@ -108,6 +108,11 @@ class BookingForm(forms.ModelForm):
         self.fields["city"].required = False
         self.fields["postcode"].required = False
 
+        # Hide phone field if event doesn't collect it
+        if event and not event.collect_phone_number:
+            self.fields['phone_number'].widget = forms.HiddenInput()
+            self.fields['phone_number'].required = False
+
         # Hide gift aid fields if event is not donation-based
         if event and not event.is_donation_based:
             self.fields['gift_aid'].widget = forms.HiddenInput()

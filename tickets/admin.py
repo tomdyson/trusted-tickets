@@ -8,12 +8,15 @@ from .models import Event, Booking
 class EventAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'ticket_price', 'is_donation_based', 'is_active', 'booking_count', 'total_revenue', 'created_at')
     list_filter = ('is_active', 'is_donation_based', 'created_at')
-    search_fields = ('name', 'slug', 'description')
+    search_fields = ('name', 'slug', 'venue_details')
     prepopulated_fields = {'slug': ('name',)}
 
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'slug', 'description', 'venue_details', 'is_active')
+            'fields': ('name', 'slug', 'venue_details', 'is_active')
+        }),
+        ('Form Options', {
+            'fields': ('collect_phone_number',)
         }),
         ('Pricing & Options', {
             'fields': ('ticket_price', 'is_donation_based', 'allow_extra_donation', 'reference_prefix')
