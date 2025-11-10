@@ -58,7 +58,7 @@ class Event(models.Model):
 
     # Email Configuration
     contact_email = models.EmailField(
-        help_text="Contact email shown to customers"
+        help_text="Contact email shown to customers (also used as Reply-To address for confirmation emails)"
     )
     admin_notification_emails = models.TextField(
         help_text="Comma-separated list of emails to notify on new bookings"

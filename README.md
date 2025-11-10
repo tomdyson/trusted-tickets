@@ -138,6 +138,8 @@ python manage.py createsuperuser
 3. Create an API key
 4. Add to `EMAIL_HOST_PASSWORD` environment variable
 
+**Note**: You only need one Resend account/API key. The `DEFAULT_FROM_EMAIL` will be the sender for all events, but each event can have its own Reply-To address via the `contact_email` field. When customers reply to confirmation emails, replies go to the event-specific contact email.
+
 ## Creating Your First Event
 
 1. **Access Admin**: Go to `https://yourdomain.com/admin`
@@ -160,9 +162,13 @@ python manage.py createsuperuser
    - Set **Reference Prefix** (e.g., "SUM" → bookings like "SUM-123")
 
 5. **Email Configuration**:
-   - **Contact Email**: Support email shown to customers
+   - **Contact Email**: Support email shown to customers (also used as Reply-To for confirmation emails)
    - **Admin Notification Emails**: Comma-separated list for booking notifications
    - **Confirmation Email**: Customize subject and body (see Email Templates below)
+
+   **Reply-To Behavior**:
+   - Customer confirmation emails use the event's `contact_email` as Reply-To (customers reply to event organizers)
+   - Admin notification emails use the customer's email as Reply-To (admins can quickly reply to customers)
 
 6. **Save** and your event is live at `https://yourdomain.com/your-slug/`!
 

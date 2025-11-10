@@ -54,7 +54,7 @@ def send_booking_confirmation_email(request, booking):
     # Create plain text version by stripping HTML tags
     plain_message = strip_tags(html_message)
 
-    # Send email
+    # Send email with Reply-To header
     try:
         send_mail(
             subject=subject,
@@ -63,6 +63,7 @@ def send_booking_confirmation_email(request, booking):
             recipient_list=[booking.email],
             html_message=html_message,
             fail_silently=False,
+            headers={'Reply-To': event.contact_email},
         )
         return True
     except Exception as e:
@@ -117,7 +118,7 @@ Payment Reference: {booking.payment_reference()}
 View in admin: {admin_url}
 """
 
-    # Send email
+    # Send email with Reply-To set to customer's email for easy replies
     try:
         send_mail(
             subject=subject,
@@ -125,6 +126,7 @@ View in admin: {admin_url}
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=admin_emails,
             fail_silently=False,
+            headers={'Reply-To': booking.email},
         )
         return True
     except Exception as e:
