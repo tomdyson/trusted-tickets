@@ -1,0 +1,141 @@
+<!-- Default Email Template for Trusted Tickets -->
+<!-- Copy this into your Event's "Confirmation Email Body" field in the admin -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .booking-details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .payment-details {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .important-note {
+            background-color: #fff3cd;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Booking Confirmation</h1>
+            <p>{{ event.name }}</p>
+        </div>
+
+        <div class="content">
+            <p>Dear {{ booking.full_name }},</p>
+
+            <p>Thank you for booking tickets for {{ event.name }}.
+                We're looking forward to seeing you there! Please complete your payment
+                as soon as possible to secure your place - details below.
+            </p>
+
+            <div class="booking-details">
+                <h2>Your Booking Details</h2>
+                <table>
+                    <tr>
+                        <th>Booking Reference:</th>
+                        <td>{{ booking.booking_reference }}</td>
+                    </tr>
+                    <tr>
+                        <th>Number of Tickets:</th>
+                        <td>{{ booking.num_tickets }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Amount:</th>
+                        <td>£{{ booking.donation_amount }}</td>
+                    </tr>
+                    {% if booking.gift_aid %}
+                    <tr>
+                        <th>Gift Aid:</th>
+                        <td>Yes - Thank you for allowing us to claim Gift Aid</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+
+            <div class="payment-details">
+                <h2>Payment Instructions</h2>
+                <p>Please complete your payment via bank transfer using the following details:</p>
+
+                <table>
+                    <tr>
+                        <th>Account Name:</th>
+                        <td>{{ bank_account_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Sort Code:</th>
+                        <td>{{ sort_code }}</td>
+                    </tr>
+                    <tr>
+                        <th>Account Number:</th>
+                        <td>{{ account_number }}</td>
+                    </tr>
+                    <tr>
+                        <th>Payment Reference:</th>
+                        <td><strong>{{ payment_reference }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Amount to Pay:</th>
+                        <td><strong>£{{ booking.donation_amount }}</strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="important-note">
+                <p><strong>Important:</strong> Please include the payment reference when making your transfer so we can match your payment to your booking.</p>
+            </div>
+
+            <p>Event details: {{ event.venue_details }}</p>
+
+            <p>If you have any questions, please contact us at <a href="mailto:{{ event.contact_email }}">{{ event.contact_email }}</a>.</p>
+
+            <p>We look forward to seeing you at the event!</p>
+
+            <p>Best regards,<br>The {{ event.name }} Team</p>
+        </div>
+    </div>
+</body>
+</html>

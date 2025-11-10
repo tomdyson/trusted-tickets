@@ -1,0 +1,125 @@
+{% extends 'tickets/base.html' %}
+
+{% block title %}Booking Confirmed - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden">
+    {% if error %}
+        <div class="p-6">
+            <div class="bg-red-50 border border-red-200 text-red-800 p-4 rounded-md mb-6">
+                <p>{{ error }}</p>
+                <p class="mt-2">Please return to the <a href="{% url 'event_booking' event.slug %}" class="text-indigo-600 underline">booking form</a> and try again.</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="p-6">
+            <div class="text-center mb-8">
+                <div class="inline-block p-3 bg-green-100 text-green-600 rounded-full mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold">Booking Confirmed!</h2>
+                <p class="text-stone-600 mt-2">Thank you for your booking. We're looking forward to seeing you at the event.
+                    <br />Please complete your payment as soon as possible to secure your place - details below
+                </p>
+            </div>
+
+            <div class="border-t border-b border-stone-200 py-6 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Booking Details</h3>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-stone-600">Booking Reference:</span>
+                        <span class="font-medium">{{ booking.booking_reference }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-stone-600">Name:</span>
+                        <span>{{ booking.full_name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-stone-600">Email:</span>
+                        <span>{{ booking.email }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-stone-600">Number of {% if event.ticket_price > 0 %}Tickets{% else %}Attendees{% endif %}:</span>
+                        <span>{{ booking.num_tickets }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-stone-600">Total {% if event.is_donation_based %}Donation{% else %}Amount{% endif %}:</span>
+                        <span class="font-semibold">£{{ booking.donation_amount }}</span>
+                    </div>
+                    {% if booking.gift_aid %}
+                    <div class="flex justify-between">
+                        <span class="text-stone-600">Gift Aid:</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Included
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-stone-50 p-6 rounded-lg border border-stone-200 mb-8">
+                <h3 class="text-lg font-semibold mb-4">Payment Instructions</h3>
+                <p class="mb-4">Please make your payment via bank transfer using the details below:</p>
+
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between">
+                        <span class="text-stone-700 font-medium">Account Name:</span>
+                        <span>{{ bank_details.account_name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-stone-700 font-medium">Sort Code:</span>
+                        <span>{{ bank_details.sort_code }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-stone-700 font-medium">Account Number:</span>
+                        <span>{{ bank_details.account_number }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-stone-700 font-medium">Payment Reference:</span>
+                        <span class="font-bold">{{ payment_reference }}</span>
+                    </div>
+                    <div class="flex justify-between pt-2 border-t border-stone-200 mt-2">
+                        <span class="text-stone-700 font-medium">Amount to Pay:</span>
+                        <span class="font-bold">£{{ booking.donation_amount }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-4 bg-amber-50 rounded-md border border-amber-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-amber-800">
+                                <strong>Important:</strong> Please include the payment reference when making your transfer so we can match your payment to your booking.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <p class="mb-4">We've sent a confirmation email to <strong>{{ booking.email }}</strong>.</p>
+                <p>If you have any questions, please contact us at <a href="mailto:{{ event.contact_email }}" class="text-indigo-600 hover:text-indigo-500">{{ event.contact_email }}</a></p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="text-center mt-8">
+    <a href="{% url 'event_booking' event.slug %}" class="inline-flex items-center px-4 py-2 border border-stone-300 shadow-sm text-sm font-medium rounded-md text-stone-700 bg-white hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-500">
+        <svg class="mr-2 -ml-1 h-5 w-5 text-stone-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Booking
+    </a>
+</div>
+{% endblock %}
