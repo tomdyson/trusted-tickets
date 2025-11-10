@@ -20,8 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy dependency files
 COPY pyproject.toml ./
 
-# Install dependencies using uv (without lock file for flexibility)
-RUN uv pip install -e .
+# Install dependencies explicitly (Django apps don't need editable install)
+RUN uv pip install "django>=5.2.6,<5.3.0" "psycopg2-binary>=2.9.9" "dj-database-url>=2.1.0" "gunicorn>=21.2.0" "whitenoise>=6.6.0"
 
 # Copy application code
 COPY . .
