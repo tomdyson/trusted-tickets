@@ -1,6 +1,50 @@
-from django.db import models
+from html.parser import HTMLParser
+from typing import List
+
 from django.core.validators import MinValueValidator
+from django.db import models
+from django.utils.html import escape
 from django.utils.text import slugify
+
+
+class VenueDetailsSanitizer(HTMLParser):
+    """HTML sanitizer allowing only a limited set of tags for venue details."""
+
+    allowed_tags = {"b", "strong"}
+
+    def __init__(self):
+        super().__init__()
+        self._fragments: List[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        tag_name = tag.lower()
+        if tag_name in self.allowed_tags:
+            self._fragments.append(f"<{tag_name}>")
+
+    def handle_endtag(self, tag):
+        tag_name = tag.lower()
+        if tag_name in self.allowed_tags:
+            self._fragments.append(f"</{tag_name}>")
+
+    def handle_data(self, data):
+        self._fragments.append(escape(data))
+
+    def handle_entityref(self, name):
+        self._fragments.append(f"&{name};")
+
+    def handle_charref(self, name):
+        self._fragments.append(f"&#{name};")
+
+    def get_html(self):
+        return "".join(self._fragments)
+
+
+def sanitize_venue_details(raw_value):
+    """Remove all HTML except <b> and <strong> tags."""
+    parser = VenueDetailsSanitizer()
+    parser.feed(raw_value or "")
+    parser.close()
+    return parser.get_html()
 
 
 class Event(models.Model):
@@ -17,7 +61,7 @@ class Event(models.Model):
         help_text="Event name displayed on the booking page"
     )
     venue_details = models.TextField(
-        help_text="Venue, date, time information"
+        help_text="Venue, date, time information. You can use <strong> or <b> for emphasis."
     )
 
     # Form Configuration
@@ -117,6 +161,8 @@ Contact: {{ event.contact_email }}</p>
         return self.name
 
     def save(self, *args, **kwargs):
+        # Sanitize venue details while allowing specific emphasis tags.
+        self.venue_details = sanitize_venue_details(self.venue_details)
         # Auto-generate slug from name if not provided
         if not self.slug:
             self.slug = slugify(self.name)
