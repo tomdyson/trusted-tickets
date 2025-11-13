@@ -102,9 +102,16 @@ DEFAULT_FROM_EMAIL=Event Tickets <noreply@yourdomain.com>
 
 ### Step 6: Deploy
 
+**Option A: Via Coolify Dashboard**
 1. Click **Deploy** in Coolify
 2. Wait for build to complete (uv makes this fast!)
 3. Access your app at your configured domain
+
+**Option B: Via Coolify CLI**
+Once changes have been pushed to main, you can deploy directly from the command line:
+```bash
+coolify deploy name trusted-tickets
+```
 
 ### Step 7: Create Admin User
 
