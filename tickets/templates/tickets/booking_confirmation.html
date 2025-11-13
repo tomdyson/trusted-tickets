@@ -65,7 +65,15 @@
 
             <div class="bg-stone-50 p-6 rounded-lg border border-stone-200 mb-8">
                 <h3 class="text-lg font-semibold mb-4">Payment Instructions</h3>
-                <p class="mb-4">Please make your payment via bank transfer using the details below:</p>
+                
+                {% if quick_pay_url %}
+                    <a href="{{ quick_pay_url }}" target="_blank" rel="noopener noreferrer" 
+                    class="inline-flex items-center px-6 py-3 mb-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">                        
+                        Pay £{{ booking.donation_amount }} 
+                    </a>
+                {% endif %}
+                
+                <p class="mb-4">Or please make your payment via bank transfer using the details below:</p>
 
                 <div class="space-y-2 mb-4">
                     <div class="flex justify-between">

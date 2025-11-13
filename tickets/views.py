@@ -11,7 +11,7 @@ from django.views.generic import CreateView, ListView, TemplateView
 
 from .forms import BookingForm, ReportFilterForm
 from .models import Booking, Event
-from .utils import send_admin_notification_email, send_booking_confirmation_email
+from .utils import send_admin_notification_email, send_booking_confirmation_email, generate_quick_pay_url
 
 
 class BookingCreateView(CreateView):
@@ -105,6 +105,8 @@ class BookingConfirmationView(TemplateView):
                 "account_number": event.account_number,
                 "reference": booking.payment_reference(),
             }
+            # Generate quick pay URL if event has quick_pay_link set
+            context["quick_pay_url"] = generate_quick_pay_url(event, booking.donation_amount, booking.payment_reference())
         except (Event.DoesNotExist, Booking.DoesNotExist):
             messages.error(self.request, "Booking not found.")
             context["error"] = "Booking information not found."

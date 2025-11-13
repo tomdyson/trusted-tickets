@@ -54,11 +54,10 @@ class Event(models.Model):
     slug = models.SlugField(
         max_length=100,
         unique=True,
-        help_text="URL-safe identifier (e.g., 'cats-event' for /cats-event/)"
+        help_text="URL-safe identifier (e.g., 'cats-event' for /cats-event/)",
     )
     name = models.CharField(
-        max_length=255,
-        help_text="Event name displayed on the booking page"
+        max_length=255, help_text="Event name displayed on the booking page"
     )
     venue_details = models.TextField(
         help_text="Venue, date, time information. You can use <strong> or <b> for emphasis."
@@ -66,8 +65,7 @@ class Event(models.Model):
 
     # Form Configuration
     collect_phone_number = models.BooleanField(
-        default=False,
-        help_text="If true, shows phone number field on booking form"
+        default=False, help_text="If true, shows phone number field on booking form"
     )
 
     # Pricing Configuration
@@ -76,31 +74,30 @@ class Event(models.Model):
         decimal_places=2,
         default=0,
         validators=[MinValueValidator(0)],
-        help_text="Base price per ticket (£). Set to 0 for donation-only events."
+        help_text="Base price per ticket (£). Set to 0 for donation-only events.",
     )
     is_donation_based = models.BooleanField(
         default=False,
-        help_text="If true, shows Gift Aid option (for UK charitable donations)"
+        help_text="If true, shows Gift Aid option (for UK charitable donations)",
     )
     allow_extra_donation = models.BooleanField(
-        default=False,
-        help_text="Allow attendees to add an optional extra donation"
+        default=False, help_text="Allow attendees to add an optional extra donation"
     )
 
     # Payment Details
     reference_prefix = models.CharField(
         max_length=10,
         default="TKT",
-        help_text="Prefix for booking references (e.g., 'SIB' creates 'SIB-123')"
+        help_text="Prefix for booking references (e.g., 'SIB' creates 'SIB-123')",
     )
     bank_account_name = models.CharField(max_length=255)
-    sort_code = models.CharField(
-        max_length=10,
-        help_text="Format: 12-34-56"
-    )
-    account_number = models.CharField(
-        max_length=20,
-        help_text="Bank account number"
+    sort_code = models.CharField(max_length=10, help_text="Format: 12-34-56")
+    account_number = models.CharField(max_length=20, help_text="Bank account number")
+    quick_pay_link = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Optional quick payment link template (e.g., 'https://monzo.me/tomdyson/{amount}?d={reference}' or 'https://paypal.me/tomdyson/{amount}/GBP'). Use {amount} for payment amount and {reference} for payment reference.",
     )
 
     # Email Configuration
@@ -111,8 +108,7 @@ class Event(models.Model):
         help_text="Comma-separated list of emails to notify on new bookings"
     )
     confirmation_email_subject = models.CharField(
-        max_length=255,
-        default="Booking Confirmation - {{ event.name }}"
+        max_length=255, default="Booking Confirmation - {{ event.name }}"
     )
     confirmation_email_body = models.TextField(
         help_text="HTML email template. Available variables: {{ booking.* }}, {{ event.* }}, {{ payment_reference }}, {{ bank_* }}",
@@ -139,13 +135,12 @@ class Event(models.Model):
 
 <p>Looking forward to seeing you!<br>
 Contact: {{ event.contact_email }}</p>
-</body></html>"""
+</body></html>""",
     )
 
     # Status
     is_active = models.BooleanField(
-        default=True,
-        help_text="Only active events accept new bookings"
+        default=True, help_text="Only active events accept new bookings"
     )
 
     # Timestamps
@@ -153,7 +148,7 @@ Contact: {{ event.contact_email }}</p>
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         verbose_name = "Event"
         verbose_name_plural = "Events"
 
@@ -170,18 +165,18 @@ Contact: {{ event.contact_email }}</p>
 
     def get_admin_emails(self):
         """Return list of admin emails."""
-        return [email.strip() for email in self.admin_notification_emails.split(',') if email.strip()]
+        return [
+            email.strip()
+            for email in self.admin_notification_emails.split(",")
+            if email.strip()
+        ]
 
 
 class Booking(models.Model):
     """Model representing a ticket booking for an event."""
 
     # Event Reference
-    event = models.ForeignKey(
-        Event,
-        on_delete=models.CASCADE,
-        related_name='bookings'
-    )
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="bookings")
 
     # Customer Information
     full_name = models.CharField(max_length=255)
@@ -193,7 +188,7 @@ class Booking(models.Model):
     donation_amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        help_text="Total amount (tickets + optional donation)"
+        help_text="Total amount (tickets + optional donation)",
     )
 
     # Gift Aid Information
@@ -211,7 +206,7 @@ class Booking(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         verbose_name = "Booking"
         verbose_name_plural = "Bookings"
 

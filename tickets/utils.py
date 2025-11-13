@@ -4,6 +4,31 @@ from django.utils.html import strip_tags
 from django.conf import settings
 
 
+def generate_quick_pay_url(event, amount, reference):
+    """
+    Generate a quick payment URL by replacing {amount} and {reference} placeholders.
+    
+    Args:
+        event: Event instance with optional quick_pay_link field
+        amount: Decimal amount to use in the URL
+        reference: Payment reference string to use in the URL
+        
+    Returns:
+        str: Formatted URL with placeholders replaced, or None if quick_pay_link is not set
+    """
+    if not event.quick_pay_link:
+        return None
+    
+    # Format amount as decimal with 2 decimal places (e.g., "25.50")
+    formatted_amount = f"{float(amount):.2f}"
+    
+    # Replace placeholders
+    url = event.quick_pay_link.replace("{amount}", formatted_amount)
+    url = url.replace("{reference}", reference)
+    
+    return url
+
+
 def render_email_template(template_string, context_dict):
     """
     Render a Django template string with the given context.
