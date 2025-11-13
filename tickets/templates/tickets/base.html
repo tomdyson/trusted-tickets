@@ -35,6 +35,9 @@
                     <ul class="flex flex-wrap justify-center gap-4 text-sm">
                         <li><a href="{% url 'event_booking' event.slug %}" class="px-3 py-2 rounded-md hover:bg-stone-200 text-stone-700 hover:text-stone-900">Booking Page</a></li>
                         <li><a href="{% url 'booking_report' event.slug %}" class="px-3 py-2 rounded-md hover:bg-stone-200 text-stone-700 hover:text-stone-900">Booking Report</a></li>
+                        {% if event.is_donation_based %}
+                        <li><a href="{% url 'gift_aid_export' event.slug %}" class="px-3 py-2 rounded-md hover:bg-stone-200 text-stone-700 hover:text-stone-900">Gift Aid CSV</a></li>
+                        {% endif %}
                         <li><a href="{% url 'admin:index' %}" class="px-3 py-2 rounded-md hover:bg-stone-200 text-stone-700 hover:text-stone-900">Admin Dashboard</a></li>
                     </ul>
                 </nav>

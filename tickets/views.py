@@ -1,10 +1,12 @@
+import csv
 from datetime import timedelta
 
-from django.conf import settings
 from django.contrib import messages
 from django.db.models import Q, Sum
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
+from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
 
 from .forms import BookingForm, ReportFilterForm
@@ -188,3 +190,45 @@ class BookingReportView(ListView):
             booking.ref = booking.booking_reference()
 
         return context
+
+
+class GiftAidExportView(View):
+    def get(self, request, event_slug):
+        event = get_object_or_404(Event, slug=event_slug)
+        if not event.is_donation_based:
+            raise Http404("Gift Aid export not available for this event.")
+
+        bookings = event.bookings.filter(gift_aid=True).order_by("created_at")
+
+        response = HttpResponse(content_type="text/csv")
+        timestamp = timezone.now().strftime("%Y%m%d")
+        filename = f"{event.slug}-gift-aid-{timestamp}.csv"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            "Full Name",
+            "Email",
+            "Donation Amount",
+            "Donation Date",
+            "Address Line 1",
+            "Address Line 2",
+            "City",
+            "Postcode",
+        ])
+
+        current_tz = timezone.get_current_timezone()
+        for booking in bookings:
+            donation_date = booking.created_at.astimezone(current_tz).strftime("%Y-%m-%d")
+            writer.writerow([
+                booking.full_name,
+                booking.email,
+                f"{booking.donation_amount}",
+                donation_date,
+                booking.address_line1 or "",
+                booking.address_line2 or "",
+                booking.city or "",
+                booking.postcode or "",
+            ])
+
+        return response
