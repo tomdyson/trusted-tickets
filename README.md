@@ -6,8 +6,9 @@ A Django-based multi-event ticket booking system with trust-based payments. Even
 
 - **Multi-Event Support**: Host multiple events from a single instance, each with its own URL slug
 - **Trust-Based Payments**: No online payment processing - attendees receive bank transfer details after booking
+- **Quick Pay Links**: Optional integration with Monzo.me, PayPal.me, or other payment services for one-click payments
 - **Flexible Pricing**: Support for fixed ticket prices, donations, or hybrid models
-- **Gift Aid Support**: Built-in UK Gift Aid handling for charitable donations
+- **Gift Aid Support**: Built-in UK Gift Aid handling for charitable donations with CSV export for tax purposes
 - **Customizable Emails**: Per-event email templates with Django template syntax
 - **Admin Dashboard**: Comprehensive booking management and reporting
 - **Zero Payment Fees**: No Stripe/PayPal fees - just direct bank transfers
@@ -15,6 +16,11 @@ A Django-based multi-event ticket booking system with trust-based payments. Even
 - **Fast Dependencies**: Uses `uv` for lightning-fast dependency installation
 
 ## Quick Start
+
+### Requirements
+
+- Python 3.12 or higher
+- PostgreSQL (optional, SQLite works for development)
 
 ### Local Development
 
@@ -130,8 +136,8 @@ python manage.py createsuperuser
 | `SECRET_KEY` | Yes | - | Django secret key (use `openssl rand -base64 32`) |
 | `DATABASE_URL` | No | SQLite | PostgreSQL connection string |
 | `DEBUG` | No | `False` | Enable debug mode (never in production!) |
-| `ALLOWED_HOSTS` | No | `localhost,127.0.0.1` | Comma-separated list of allowed hosts |
-| `CSRF_TRUSTED_ORIGINS` | No | `http://localhost` | Comma-separated list of trusted origins |
+| `ALLOWED_HOSTS` | No | `localhost,127.0.0.1` | Comma-separated list of allowed hosts (note: codebase may have custom defaults) |
+| `CSRF_TRUSTED_ORIGINS` | No | `http://localhost` | Comma-separated list of trusted origins (include `https://` for production) |
 | `EMAIL_HOST_PASSWORD` | Yes* | - | Resend API key for sending emails |
 | `DEFAULT_FROM_EMAIL` | No | `Trusted Tickets <noreply@example.com>` | From address for emails |
 | `PORT` | No | `8000` | Port for Gunicorn (Coolify sets this automatically) |
@@ -156,8 +162,9 @@ python manage.py createsuperuser
    - Fill in the required fields:
      - **Slug**: URL identifier (e.g., `summer-concert` → `/summer-concert/`)
      - **Name**: Display name (e.g., "Summer Concert 2025")
-     - **Description**: Event details (HTML supported)
-     - **Venue Details**: Location, date, time
+     - **Venue Details**: Location, date, time (supports `<b>` and `<strong>` tags for emphasis)
+   - **Form Options**:
+     - **Collect Phone Number**: Enable to show phone number field on booking form (optional)
 
 3. **Configure Pricing**:
    - **Ticket Price**: Set to £0 for donation-only events
@@ -167,6 +174,11 @@ python manage.py createsuperuser
 4. **Bank Details**:
    - Enter your bank account details for payment instructions
    - Set **Reference Prefix** (e.g., "SUM" → bookings like "SUM-123")
+   - **Quick Pay Link** (optional): Add a quick payment link template for services like Monzo.me or PayPal.me
+     - Use `{amount}` placeholder for the payment amount (e.g., `25.50`)
+     - Use `{reference}` placeholder for the payment reference
+     - Example: `https://monzo.me/username/{amount}?d={reference}` or `https://paypal.me/username/{amount}/GBP`
+     - If set, a "Pay Now" button will appear on the booking confirmation page
 
 5. **Email Configuration**:
    - **Contact Email**: Support email shown to customers (also used as Reply-To for confirmation emails)
@@ -273,6 +285,15 @@ Features:
 - Gift aid tracking
 - Search and filter bookings
 - Pagination for large events
+
+### Gift Aid Export
+
+For donation-based events, export Gift Aid data as CSV for tax purposes:
+- Access at: `https://yourdomain.com/event-slug/gift-aid-export/`
+- Only available for events with `is_donation_based` enabled
+- Requires staff login
+- Exports: Name, Email, Donation Amount, Date, and full address for all Gift Aid bookings
+- CSV filename format: `{event-slug}-gift-aid-{timestamp}.csv`
 
 ## Development
 
