@@ -1,0 +1,127 @@
+{% extends 'tickets/base.html' %}
+
+{% block title %}Bank Reconciliation - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden">
+    <div class="p-6">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-6">Bank Statement Reconciliation</h2>
+        <p class="text-stone-600 mb-6">Upload a bank statement CSV to automatically match transactions with unpaid bookings.</p>
+
+        <!-- Upload Form -->
+        <div class="mb-8 p-4 bg-stone-50 rounded-lg border border-stone-200">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">CSV File</label>
+                        <input type="file" name="csv_file" accept=".csv" required
+                               class="w-full px-4 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-stone-500 focus:border-stone-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">LLM Provider</label>
+                        <select name="llm_provider" class="w-full px-4 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-stone-500 focus:border-stone-500">
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="mistral">Mistral</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full px-4 py-2 bg-stone-800 text-white rounded-md hover:bg-stone-900">
+                            Parse & Match
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results -->
+        {% if results %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-stone-200">
+                <thead class="bg-stone-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Transaction</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Suggested Match</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-stone-200">
+                    {% for result in results %}
+                    <tr class="hover:bg-stone-50">
+                        <td class="px-4 py-3 text-sm">
+                            <div class="font-medium">{{ result.transaction.date }}</div>
+                            <div class="text-stone-600 text-xs">{{ result.transaction.description }}</div>
+                            {% if result.transaction.reference %}
+                            <div class="text-stone-500 text-xs">Ref: {{ result.transaction.reference }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">£{{ result.transaction.amount }}</td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if result.match.booking %}
+                                <div class="font-medium">{{ result.match.booking.reference }}</div>
+                                <div class="text-stone-600 text-xs">{{ result.match.booking.name }} ({{ result.match.booking.email }})</div>
+                                <div class="text-xs mt-1">
+                                    {% if result.match.confidence == "high" %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                        High Confidence
+                                    </span>
+                                    {% elif result.match.confidence == "medium" %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                                        Medium Confidence
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        Low Confidence
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-stone-500 text-xs mt-1">{{ result.match.reason }}</div>
+                            {% elif result.match.candidates %}
+                                <div class="text-amber-600 text-sm font-medium">Multiple matches found</div>
+                                <div class="text-stone-600 text-xs">{{ result.match.reason }}</div>
+                                <details class="mt-2">
+                                    <summary class="text-xs text-indigo-600 cursor-pointer">View candidates</summary>
+                                    <ul class="mt-1 text-xs space-y-1">
+                                        {% for candidate in result.match.candidates %}
+                                        <li>{{ candidate.reference }}: {{ candidate.name }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </details>
+                            {% else %}
+                                <span class="text-stone-400">No match found</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                            {% if result.match.booking %}
+                            <form method="post" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="confirm_match" value="1">
+                                <input type="hidden" name="booking_id" value="{{ result.match.booking.id }}">
+                                <input type="hidden" name="transaction_index" value="{{ forloop.counter0 }}">
+                                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
+                                    Confirm
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-stone-400 text-xs">Manual review needed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-stone-900">No results yet</h3>
+            <p class="mt-1 text-sm text-stone-500">Upload a CSV file to get started.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
