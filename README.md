@@ -295,6 +295,16 @@ For donation-based events, export Gift Aid data as CSV for tax purposes:
 - Exports: Name, Email, Donation Amount, Date, and full address for all Gift Aid bookings
 - CSV filename format: `{event-slug}-gift-aid-{timestamp}.csv`
 
+### Export Email Addresses
+
+To get a comma-separated list of all unique email addresses for an event:
+
+```bash
+psql "YOUR_DATABASE_URL" -c "SELECT string_agg(DISTINCT email, ', ') as emails FROM tickets_booking b JOIN tickets_event e ON b.event_id = e.id WHERE e.slug = 'your-event-slug';"
+```
+
+Replace `YOUR_DATABASE_URL` with your PostgreSQL connection string and `your-event-slug` with the event's slug.
+
 ## Development
 
 ### Project Structure
