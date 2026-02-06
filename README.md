@@ -285,6 +285,7 @@ Features:
 - Gift aid tracking
 - Search and filter bookings
 - Pagination for large events
+- One-click "Copy emails" for unique BCC list (Name <email> format)
 
 ### Gift Aid Export
 

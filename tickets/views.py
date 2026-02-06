@@ -187,6 +187,28 @@ class BookingReportView(ListView):
         )
         context["gift_aid_count"] = bookings.filter(gift_aid=True).count()
 
+        all_bookings = (
+            Booking.objects.filter(event=self.event)
+            .order_by("created_at")
+            .values_list("email", "full_name")
+        )
+        seen_emails = set()
+        bcc_entries = []
+        for email, full_name in all_bookings:
+            if not email:
+                continue
+            normalized_email = email.strip().lower()
+            if normalized_email in seen_emails:
+                continue
+            seen_emails.add(normalized_email)
+            name = (full_name or "").strip()
+            if name:
+                bcc_entries.append(f"{name} <{email.strip()}>")
+            else:
+                bcc_entries.append(email.strip())
+        context["bcc_emails"] = ", ".join(bcc_entries)
+        context["bcc_emails_count"] = len(bcc_entries)
+
         # Make booking references available for all bookings in the template
         for booking in context["bookings"]:
             booking.ref = booking.booking_reference()

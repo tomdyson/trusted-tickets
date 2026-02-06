@@ -146,4 +146,69 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+    (function () {
+        const bccList = "{{ bcc_emails|escapejs }}";
+        const link = document.getElementById("copy-bcc-link");
+
+        if (!link) {
+            return;
+        }
+
+        const defaultText = link.textContent || "Copy emails";
+        let resetTimer = null;
+
+        const setStatus = (message, isError) => {
+            link.textContent = message;
+            link.className = isError
+                ? "px-3 py-2 rounded-md bg-rose-100 text-rose-700"
+                : "px-3 py-2 rounded-md bg-emerald-100 text-emerald-700";
+            if (resetTimer) {
+                window.clearTimeout(resetTimer);
+            }
+            resetTimer = window.setTimeout(() => {
+                link.textContent = defaultText;
+                link.className = "px-3 py-2 rounded-md hover:bg-stone-200 text-stone-700 hover:text-stone-900";
+            }, 2000);
+        };
+
+        const copyFallback = () => {
+            const textarea = document.createElement("textarea");
+            textarea.value = bccList;
+            textarea.setAttribute("readonly", "");
+            textarea.style.position = "absolute";
+            textarea.style.left = "-9999px";
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand("copy");
+                setStatus("Copied.", false);
+            } catch (error) {
+                setStatus("Copy failed.", true);
+            }
+            document.body.removeChild(textarea);
+        };
+
+        link.addEventListener("click", async (event) => {
+            event.preventDefault();
+            if (!bccList) {
+                setStatus("No emails found.", true);
+                return;
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(bccList);
+                    setStatus("Copied.", false);
+                } catch (error) {
+                    copyFallback();
+                }
+                return;
+            }
+
+            copyFallback();
+        });
+    })();
+</script>
 {% endblock %}

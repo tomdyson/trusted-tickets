@@ -38,6 +38,9 @@
                         {% if event.is_donation_based %}
                         <li><a href="{% url 'gift_aid_export' event.slug %}" class="px-3 py-2 rounded-md hover:bg-stone-200 text-stone-700 hover:text-stone-900">Gift Aid CSV</a></li>
                         {% endif %}
+                        {% if bcc_emails_count %}
+                        <li><a href="#" id="copy-bcc-link" class="px-3 py-2 rounded-md hover:bg-stone-200 text-stone-700 hover:text-stone-900">Copy emails</a></li>
+                        {% endif %}
                         <li><a href="{% url 'admin:index' %}" class="px-3 py-2 rounded-md hover:bg-stone-200 text-stone-700 hover:text-stone-900">Admin Dashboard</a></li>
                     </ul>
                 </nav>
