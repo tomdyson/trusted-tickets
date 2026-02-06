@@ -4,14 +4,18 @@ from datetime import timedelta
 from django.contrib import messages
 from django.db.models import Q, Sum
 from django.http import Http404, HttpResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
 
 from .forms import BookingForm, ReportFilterForm
 from .models import Booking, Event
-from .utils import send_admin_notification_email, send_booking_confirmation_email, generate_quick_pay_url
+from .utils import (
+    generate_quick_pay_url,
+    send_admin_notification_email,
+    send_booking_confirmation_email,
+)
 
 
 class BookingCreateView(CreateView):
