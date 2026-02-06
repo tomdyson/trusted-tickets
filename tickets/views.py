@@ -4,14 +4,18 @@ from datetime import timedelta
 from django.contrib import messages
 from django.db.models import Q, Sum
 from django.http import Http404, HttpResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
 
 from .forms import BookingForm, ReportFilterForm
 from .models import Booking, Event
-from .utils import send_admin_notification_email, send_booking_confirmation_email, generate_quick_pay_url
+from .utils import (
+    generate_quick_pay_url,
+    send_admin_notification_email,
+    send_booking_confirmation_email,
+)
 
 
 class BookingCreateView(CreateView):
@@ -187,6 +191,28 @@ class BookingReportView(ListView):
         )
         context["gift_aid_count"] = bookings.filter(gift_aid=True).count()
 
+        all_bookings = (
+            Booking.objects.filter(event=self.event)
+            .order_by("created_at")
+            .values_list("email", "full_name")
+        )
+        seen_emails = set()
+        bcc_entries = []
+        for email, full_name in all_bookings:
+            if not email:
+                continue
+            normalized_email = email.strip().lower()
+            if normalized_email in seen_emails:
+                continue
+            seen_emails.add(normalized_email)
+            name = (full_name or "").strip()
+            if name:
+                bcc_entries.append(f"{name} <{email.strip()}>")
+            else:
+                bcc_entries.append(email.strip())
+        context["bcc_emails"] = ", ".join(bcc_entries)
+        context["bcc_emails_count"] = len(bcc_entries)
+
         # Make booking references available for all bookings in the template
         for booking in context["bookings"]:
             booking.ref = booking.booking_reference()
@@ -234,3 +260,115 @@ class GiftAidExportView(View):
             ])
 
         return response
+
+
+class ReconciliationView(TemplateView):
+    """Bank statement reconciliation view."""
+    template_name = "tickets/reconciliation.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        event_slug = self.kwargs.get("event_slug")
+        context["event"] = get_object_or_404(Event, slug=event_slug)
+        
+        # Get reconciliation results from session if available
+        results = self.request.session.get(f"reconciliation_results_{event_slug}")
+        if results:
+            context["results"] = results
+            
+        return context
+
+    def post(self, request, *args, **kwargs):
+        event_slug = self.kwargs.get("event_slug")
+        event = get_object_or_404(Event, slug=event_slug)
+        
+        # Handle file upload
+        if "csv_file" in request.FILES:
+            csv_file = request.FILES["csv_file"]
+            
+            # Get LLM configuration from request or use defaults
+            llm_provider = request.POST.get("llm_provider", "openai")
+            llm_model = request.POST.get("llm_model", "gpt-4o-mini")
+            
+            try:
+                from .reconciliation import ReconciliationService
+                
+                service = ReconciliationService(event, llm_provider, llm_model)
+                results = service.reconcile(csv_file)
+                
+                # Store results in session for display
+                # Serialize for session storage
+                serialized_results = []
+                for result in results:
+                    match = result.get("match")
+                    serialized_match = None
+                    
+                    if match:
+                        serialized_match = {
+                            "confidence": match.get("confidence"),
+                            "reason": match.get("reason"),
+                        }
+                        
+                        if match.get("booking"):
+                            booking = match["booking"]
+                            serialized_match["booking"] = {
+                                "id": booking.id,
+                                "reference": booking.payment_reference(),
+                                "name": booking.full_name,
+                                "email": booking.email,
+                                "amount": str(booking.donation_amount),
+                                "num_tickets": booking.num_tickets,
+                            }
+                        elif match.get("candidates"):
+                            serialized_match["candidates"] = [
+                                {
+                                    "id": b.id,
+                                    "reference": b.payment_reference(),
+                                    "name": b.full_name,
+                                    "email": b.email,
+                                    "amount": str(b.donation_amount),
+                                    "num_tickets": b.num_tickets,
+                                }
+                                for b in match["candidates"]
+                            ]
+                    
+                    serialized_results.append({
+                        "transaction": {
+                            "date": result["transaction"]["date"],
+                            "amount": str(result["transaction"]["amount"]),
+                            "description": result["transaction"]["description"],
+                            "reference": result["transaction"].get("reference", ""),
+                        },
+                        "match": serialized_match,
+                    })
+                
+                request.session[f"reconciliation_results_{event_slug}"] = serialized_results
+                messages.success(request, f"Parsed {len(results)} transactions from CSV.")
+                
+            except Exception as e:
+                messages.error(request, f"Error processing CSV: {str(e)}")
+        
+        # Handle confirmation of a match
+        elif "confirm_match" in request.POST:
+            booking_id = request.POST.get("booking_id")
+            try:
+                booking = Booking.objects.get(id=booking_id, event=event)
+                booking.is_paid = True
+                booking.save()
+                messages.success(
+                    request,
+                    f"Marked {booking.payment_reference()} as paid."
+                )
+                
+                # Remove this transaction from session results
+                results = request.session.get(f"reconciliation_results_{event_slug}", [])
+                transaction_index = int(request.POST.get("transaction_index", -1))
+                if 0 <= transaction_index < len(results):
+                    results.pop(transaction_index)
+                    request.session[f"reconciliation_results_{event_slug}"] = results
+                    
+            except Booking.DoesNotExist:
+                messages.error(request, "Booking not found.")
+        
+        return redirect("reconciliation", event_slug=event_slug)
+

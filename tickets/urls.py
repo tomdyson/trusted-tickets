@@ -6,6 +6,7 @@ from .views import (
     BookingCreateView,
     BookingReportView,
     GiftAidExportView,
+    ReconciliationView,
 )
 
 urlpatterns = [
@@ -29,5 +30,10 @@ urlpatterns = [
         "<slug:event_slug>/gift-aid-export/",
         staff_member_required(GiftAidExportView.as_view()),
         name="gift_aid_export",
+    ),
+    path(
+        "<slug:event_slug>/reconciliation/",
+        staff_member_required(ReconciliationView.as_view()),
+        name="reconciliation",
     ),
 ]
